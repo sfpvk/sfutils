@@ -79,18 +79,18 @@ public:
 	ssize_t next_line(ssize_t pos, int line_width);
 };
 
-Ustring::Ustring(const Ustring &other) :
+inline Ustring::Ustring(const Ustring &other) :
 	Ustring{other.m_str, other.m_loc}
 {
 }
 
-Ustring::Ustring(Ustring &&other)noexcept :
+inline Ustring::Ustring(Ustring &&other)noexcept :
 	Ustring{other.m_loc}
 {
 	swap(*this, other);
 }
 
-Ustring::Ustring(const std::locale *r_loc) :
+inline Ustring::Ustring(const std::locale *r_loc) :
 	m_loc{r_loc},
 	m_insert_pos{-1},
 	m_markup_state{e_unmarked} {}
@@ -122,14 +122,14 @@ Ustring &Ustring::operator=(const std::basic_string<CharT> &str)
 	return operator=(m_str);
 }
 
-Ustring &Ustring::operator=(const Ustring &other)
+inline Ustring &Ustring::operator=(const Ustring &other)
 {
 	Ustring other_new(other);
 	swap(*this, other_new);
 	return *this;
 }
 
-Ustring &Ustring::operator=(Ustring &&other)noexcept
+inline Ustring &Ustring::operator=(Ustring &&other)noexcept
 {
 	swap(*this, other);
 	return *this;
@@ -152,12 +152,12 @@ inline Ustring &Ustring::operator+=(const T &str)
 	return *this;
 }
 
-Ustring &Ustring::operator+=(const Ustring &str)
+inline Ustring &Ustring::operator+=(const Ustring &str)
 {
 	return operator+=(str.m_str);
 }
 
-void swap(Ustring &l, Ustring &r)
+inline void swap(Ustring &l, Ustring &r)
 {
 	using std::ranges::swap;
 	swap(l.m_str, r.m_str);
@@ -169,7 +169,7 @@ void swap(Ustring &l, Ustring &r)
 	swap(l.m_markup_state, r.m_markup_state);
 }
 
-std::wstring Ustring::base_wstring()&&
+inline std::wstring Ustring::base_wstring()&&
 {
 	std::wstring ret(std::move(m_str));
 	m_insert_pos = -1;
@@ -259,7 +259,7 @@ inline ssize_t Ustring::prev_line(ssize_t pos, int line_width)
 	return pos;
 }
 
-bool Ustring::s_is_newline(std::wstring::const_iterator begin,
+inline bool Ustring::s_is_newline(std::wstring::const_iterator begin,
 		std::wstring::const_iterator end)
 {
 	switch (end - begin) {

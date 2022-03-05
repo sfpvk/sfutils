@@ -17,7 +17,7 @@ void g_cvt_to_wide(const CharT *in_beg,
 }
 
 template <>
-void g_cvt_to_wide(const char *in_beg,
+inline void g_cvt_to_wide(const char *in_beg,
 		const char *in_end,
 		std::wstring *o_out,
 		const std::locale &loc)
@@ -26,7 +26,7 @@ void g_cvt_to_wide(const char *in_beg,
 }
 
 template <>
-void g_cvt_to_wide(const wchar_t *in_beg,
+inline void g_cvt_to_wide(const wchar_t *in_beg,
 		const wchar_t *in_end,
 		std::wstring *o_out,
 		const std::locale &)
@@ -56,7 +56,7 @@ void g_cvt_from_wide(const wchar_t *in_begin,
 }
 
 template <>
-void g_cvt_from_wide(const wchar_t *in_begin,
+inline void g_cvt_from_wide(const wchar_t *in_begin,
 		const wchar_t *in_end,
 		std::wstring *o_out,
 		const std::locale &)
@@ -65,7 +65,7 @@ void g_cvt_from_wide(const wchar_t *in_begin,
 }
 
 template <>
-void g_cvt_from_wide(const wchar_t *in_begin,
+inline void g_cvt_from_wide(const wchar_t *in_begin,
 		const wchar_t *in_end,
 		std::string *o_out,
 		const std::locale &loc)

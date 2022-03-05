@@ -12,7 +12,7 @@
 namespace sfpvk::utils  {
 
 
-int g_usym_width(const wchar_t *beg, const wchar_t *last)
+inline int g_usym_width(const wchar_t *beg, const wchar_t *last)
 {
 	return wcwidth(*beg);
 }
