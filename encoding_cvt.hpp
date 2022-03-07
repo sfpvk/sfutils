@@ -4,7 +4,7 @@
 #include <locale>
 
 
-namespace sfpvk::utils  {
+namespace sfpvk::utils::unicode {
 
 
 template <typename CharT>
@@ -82,4 +82,4 @@ void g_cvt_from_wide(const std::wstring &in,
 }
 
 
-} //sfpvk::utils
+} //sfpvk::utils::unicode

@@ -9,7 +9,7 @@
 #endif
 
 
-namespace sfpvk::utils  {
+namespace sfpvk::utils::unicode {
 
 
 inline int g_usym_width(const wchar_t *beg, const wchar_t *last)
@@ -18,4 +18,4 @@ inline int g_usym_width(const wchar_t *beg, const wchar_t *last)
 }
 
 
-} //sfpvk::utils
+} //sfpvk::utils::unicode

@@ -11,7 +11,7 @@
 #include "base.hpp"
 
 
-namespace sfpvk::utils {
+namespace sfpvk::utils::unicode {
 
 
 class Ustring
@@ -384,4 +384,4 @@ inline void Ustring::markup(markup_e m)
 }
 
 
-} //sfpvk::utils
+} //sfpvk::utils::unicode
