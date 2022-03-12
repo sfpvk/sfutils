@@ -14,6 +14,19 @@
 namespace sfpvk::utils::unicode {
 
 
+template <typename T>
+concept Wchar_string = (std::same_as<std::decay_t<
+			std::remove_pointer_t<std::decay_t<T>>>, wchar_t>  ||
+		std::same_as<typename std::remove_cvref_t<T>::value_type, wchar_t>);
+
+template <typename T>
+concept Wchar_std_string = Wchar_string<T>  &&
+		!std::same_as<typename std::remove_cvref_t<T>, class Ustring>;
+
+template <typename T>
+concept Non_wchar_std_string = !Wchar_string<T>  &&
+		!std::same_as<typename std::remove_cvref_t<T>, class Ustring>;
+
 class Ustring
 {
 	friend void swap(Ustring &l, Ustring &r);
@@ -26,7 +39,8 @@ class Ustring
 	void markup(markup_e m);
 	std::wstring m_str;
 	std::vector<std::pair<std::wstring::const_iterator,
-				std::wstring::const_iterator>> m_chedges;
+		std::wstring::const_iterator>> m_chedges;
+
 	boost::locale::boundary::wssegment_index m_characters;
 	boost::locale::boundary::wssegment_index m_words;
 	const std::locale *m_loc;
@@ -39,24 +53,18 @@ public:
 	Ustring(const std::locale *r_loc);
 	Ustring(const Ustring &other);
 	template <typename T>
-		Ustring(T &&str,
-				const std::locale *r_loc);
+		Ustring(T &&str, const std::locale *r_loc);
 	Ustring(Ustring &&other)noexcept;
 	Ustring &operator=(const Ustring &other);
 	Ustring &operator=(Ustring &&other)noexcept;
-	template <typename CharT>
-		requires (! std::same_as<CharT, wchar_t>)
-		Ustring &operator=(const std::basic_string<CharT> &str);
-	template <typename T>
-		requires (std::same_as<std::remove_cvref_t<T>,
-					 std::basic_string<wchar_t>>  ||
-				std::same_as<std::decay_t<T>, const wchar_t *>)
+	template <Non_wchar_std_string T>
 		Ustring &operator=(T &&str);
-	template <typename T>
+	template <Wchar_std_string T>
+		Ustring &operator=(T &&str);
+	template <Non_wchar_std_string T>
 		Ustring &operator+=(const T &str);
-	template <typename CharT>
-		requires (! std::same_as<CharT, wchar_t>)
-		Ustring &operator+=(const std::basic_string<CharT> &str);
+	template <Wchar_std_string T>
+		Ustring &operator+=(const T &str);
 	Ustring &operator+=(const Ustring &str);
 	template <typename CharT>
 		void cvt(std::basic_string<CharT> *o_dest);
@@ -102,10 +110,7 @@ Ustring::Ustring(T &&str,
 	operator=(std::forward<T>(str));
 }
 
-template <typename T>
-requires (std::same_as<std::remove_cvref_t<T>,
-			 std::basic_string<wchar_t>>  ||
-		std::same_as<std::decay_t<T>, const wchar_t *>)
+template <Wchar_std_string T>
 Ustring &Ustring::operator=(T &&str)
 {
 	m_str = std::forward<T>(str);
@@ -114,9 +119,8 @@ Ustring &Ustring::operator=(T &&str)
 	return *this;
 }
 
-template <typename CharT>
-requires (! std::same_as<CharT, wchar_t>)
-Ustring &Ustring::operator=(const std::basic_string<CharT> &str)
+template <Non_wchar_std_string T>
+Ustring &Ustring::operator=(T &&str)
 {
 	g_cvt_to_wide(str, &m_str, *m_loc);
 	return operator=(m_str);
@@ -135,16 +139,15 @@ inline Ustring &Ustring::operator=(Ustring &&other)noexcept
 	return *this;
 }
 
-template <typename CharT>
-requires (! std::same_as<CharT, wchar_t>)
-Ustring &Ustring::operator+=(const std::basic_string<CharT> &str)
+template <Non_wchar_std_string T>
+Ustring &Ustring::operator+=(const T &str)
 {
 	std::wstring buf;
 	g_cvt_to_wide(str, &buf, *m_loc);
 	return operator+=(buf);
 }
 
-template <typename T>
+template <Wchar_std_string T>
 inline Ustring &Ustring::operator+=(const T &str)
 {
 	m_str += str;
