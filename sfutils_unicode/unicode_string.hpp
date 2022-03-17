@@ -9,7 +9,7 @@
 #include <concepts>
 #include <algorithm>
 #include "encoding_cvt.hpp"
-#include "../base.hpp"
+#include "../sfutils_base.hpp"
 
 
 namespace sfpvk::utils::unicode {
