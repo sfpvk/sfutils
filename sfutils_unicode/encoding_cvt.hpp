@@ -42,6 +42,15 @@ void g_cvt_to_wide(const std::basic_string<CharT> in,
 	g_cvt_to_wide(&in[0], &in[in.size()], o_out, loc);
 }
 
+template <typename CharT>
+void g_cvt_to_wide(const CharT *in,
+		std::wstring *o_out,
+		const std::locale &loc)
+{
+	std::basic_string<CharT> str(in);
+	g_cvt_to_wide(&str[0], &str[str.size()], o_out, loc);
+}
+
 //----------------------------------------------------------------------------+
 //                                                                            |
 //----------------------------------------------------------------------------+
