@@ -2,6 +2,7 @@
 #include <boost/locale.hpp>
 #include <string>
 #include <locale>
+#include <string_view>
 
 
 namespace sfpvk::utils::unicode {
@@ -44,6 +45,15 @@ void g_cvt_to_wide(const std::basic_string<CharT> in,
 
 template <typename CharT>
 void g_cvt_to_wide(const CharT *in,
+		std::wstring *o_out,
+		const std::locale &loc)
+{
+	std::basic_string<CharT> str(in);
+	g_cvt_to_wide(&str[0], &str[str.size()], o_out, loc);
+}
+
+template <typename CharT>
+void g_cvt_to_wide(std::basic_string_view<CharT> in,
 		std::wstring *o_out,
 		const std::locale &loc)
 {

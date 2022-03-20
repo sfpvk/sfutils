@@ -19,17 +19,25 @@ bool subtest_1()
 	Ustring us_1(&loc);
 	Ustring us_2(&loc);
 	
-	us_1 = "Hellow world";
+	us_1 = std::string_view("Hello ");
+	us_1 += std::string_view("wor");
+	us_1 += std::u8string_view(u8"ld from unit test");
 
-	us_2 = L"Hellow";
-	us_2 += std::string(" ");
-	us_2 += u8"wo";
-	us_2.push_back('r');
-	us_2.insert(us_2.ssize_in_codepoints(), L'l');
-	us_2.insert(us_2.ssize_in_codepoints(), std::wstring(L"d"));
-	// Add Emoji - 1 character, 2 - code points.
-	us_2.insert(us_2.ssize_in_codepoints(),
-			std::wstring(L"\U0001F595\U0001F3FF"));
+	us_2 = L"He";
+	us_2 += std::string("ll");
+	us_2 += u8"o";
+	us_2.push_back(' ');
+	us_2.insert(us_2.ssize_in_codepoints(), L'w');
+	us_2.insert(us_2.ssize_in_codepoints(), L"o");
+	us_2.insert(us_2.ssize_in_codepoints(), "r");
+	us_2.insert(us_2.ssize_in_codepoints(), u8"l");
+	us_2.insert(us_2.ssize_in_codepoints(), std::string_view("d "));
+	us_2.insert(us_2.ssize_in_codepoints(), std::wstring_view(L"from"));
+	us_2.insert(us_2.ssize_in_codepoints(), std::u8string_view(u8" unit"));
+	us_2.insert(us_2.ssize_in_codepoints(), std::string(" test"));
+
+	// Add Emoji - 1 character, 2 code points.
+	us_2.insert(us_2.ssize_in_codepoints(), L"\U0001F595\U0001F3FF");
 
 	TEST(us_2.ssize_in_codepoints() == us_2.ssize_in_segments()+1);
 
@@ -56,12 +64,11 @@ bool subtest_2()
 
 	Ustring us(&loc);
 	for (int i = 0;  i < 3;  ++i)
-		us.insert(us.ssize_in_codepoints(),
-				std::wstring(L"\U0001F595\U0001F3FF"));
+		// Add Emoji - 1 character, 2 code points.
+		us.insert(us.ssize_in_codepoints(), L"\U0001F595\U0001F3FF");
 
 	TEST(us.ssize_in_codepoints() == 6  &&  us.ssize_in_segments() == 3);
 
-	// Add Emoji - 1 character, 2 - code points.
 	TEST(std::wstring(us[0].begin, us[0].end) == L"\U0001F595\U0001F3FF");
 	
 	for (int i = 0;  i <= 3;  ++i)
