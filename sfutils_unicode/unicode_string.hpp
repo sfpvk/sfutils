@@ -25,35 +25,18 @@ enum class segment_type_e
 	line
 };
 
-enum normalization_mode_e
+enum class normalization_mode_e
 {
 	// Canonical decomposition.
-	e_nfd,
+	nfd,
 	// Canonical decomposition followed by canonical composition.
-	e_nfc,
+	nfc,
 	// Compatibility decomposition.
-	e_nfkd,
+	nfkd,
 	// Compatibility decomposition followed by canonical composition.
-	e_nfkc
+	nfkc
 };
 
-enum comparison_mode_e
-{
-	// Ignore accents and character case, comparing base letters only.
-	// For example "facade" and "Façade" are the same.
-	e_primary,
-	// Ignore character case but consider accents. "facade" and
-	// "façade" are different but "Façade" and "façade" are the same.
-	e_secondary,
-	// Consider both case and accents: "Façade" and "façade"
-	// are different. Ignore punctuation.
-	e_tertiary,
-	// Consider all case, accents, and punctuation. The words 
-	// must be identical in terms of Unicode representation.
-	e_quaternary,
-	// As quaternary, but compare code points as well.
-	e_identical
-};
 //----------------------------------------------------------------------------+
 //                                                                            |
 //----------------------------------------------------------------------------+
@@ -198,15 +181,11 @@ public:
 	void clear();
 	const std::wstring &base_wstring()const &;
 	std::wstring base_wstring()&&;
-	void normalize(normalization_mode_e m=e_nfc);
+	void normalize(normalization_mode_e m=normalization_mode_e::nfc);
 	void fold_case();
 	void to_title();
 	void to_lower();
 	void to_upper();
-	// Returns negative value if *this appears before,
-	// zero if both are equivalent,
-	// positive value if *this appears after.
-	bool compare(comparison_mode_e m, const std::wstring &str)const;
 private:
 	ssize_t find_pos(cpnt_pos pos);
 	void markup();
@@ -416,13 +395,13 @@ inline void Ustring::normalize(normalization_mode_e m)
 {
 	boost::locale::norm_type bm = boost::locale::norm_nfc;
 	switch (m) {
-	case e_nfd:
+	case normalization_mode_e::nfd:
 		bm = boost::locale::norm_nfd; break;
-	case e_nfc:
+	case normalization_mode_e::nfc:
 		bm = boost::locale::norm_nfc; break;
-	case e_nfkd:
+	case normalization_mode_e::nfkd:
 		bm = boost::locale::norm_nfkd; break;
-	case e_nfkc:
+	case normalization_mode_e::nfkc:
 		bm = boost::locale::norm_nfkc;
 	}
 	m_str = boost::locale::normalize(m_str, bm, *m_loc);
@@ -451,27 +430,6 @@ inline void Ustring::to_upper()
 {
 	m_str = boost::locale::to_upper(m_str, *m_loc);
 	m_markup_state = false;
-}
-
-inline bool Ustring::compare(comparison_mode_e m,
-		const std::wstring &str)const
-{
-	boost::locale::collator_base::level_type lev =
-		boost::locale::collator_base::primary;
-	switch (m) {
-	case e_primary:
-		lev = boost::locale::collator_base::primary; break;
-	case e_secondary:
-		lev = boost::locale::collator_base::secondary; break;
-	case e_tertiary:
-		lev = boost::locale::collator_base::tertiary; break;
-	case e_quaternary:
-		lev = boost::locale::collator_base::quaternary; break;
-	case e_identical:
-		lev = boost::locale::collator_base::identical;
-	}
-	return use_facet<boost::locale::collator<wchar_t>>(*m_loc).compare(
-			lev, m_str, str);
 }
 
 inline ssize_t Ustring::find_pos(cpnt_pos pos)
