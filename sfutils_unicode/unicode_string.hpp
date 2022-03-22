@@ -249,7 +249,7 @@ inline Ustring::Ustring(const std::locale *r_loc) :
 	m_markup_state{false},
 	m_markup_mode{segment_type_e::character},
 	m_rule_mask{boost::locale::boundary::character_mask},
-	m_full_select{true}
+	m_full_select{false}
 {
 }
 
