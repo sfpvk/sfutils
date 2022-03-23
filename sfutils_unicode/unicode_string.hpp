@@ -110,14 +110,15 @@ struct Segment
 	segment_rule_t type;
 };
 
+struct Segment_idx
+{
+	ssize_t begin;
+	ssize_t end;
+	segment_rule_t type;
+};
+
 class Ustring
 {
-	struct Segment_internal
-	{
-		ssize_t begin;
-		ssize_t end;
-		segment_rule_t type;
-	};
 public:
 	// Position measured in code points.
 	using cpnt_pos = ssize_t;
@@ -160,6 +161,7 @@ public:
 	// 0 <= i <= ssize_in_segments(). If i == ssize_in_segments(), then
 	// returns {{wstring::end(), wstring::end()}, 0}.
 	Segment operator[](sgmnt_pos i);
+	const std::vector<Segment_idx> markup_array();
 	// Sets a type of segments that are traversed with operator[].
 	// For segment_type_e::character the rule_mask is ignored.
 	// full_select - see the reference information for
@@ -190,7 +192,7 @@ private:
 	ssize_t find_pos(cpnt_pos pos);
 	void markup();
 	std::wstring m_str;
-	std::vector<Segment_internal> m_segment_edges;
+	std::vector<Segment_idx> m_segment_edges;
 	const std::locale *m_loc;
 	bool m_markup_state;
 	segment_type_e m_markup_mode;
@@ -303,6 +305,13 @@ inline Segment Ustring::operator[](sgmnt_pos i)
 	const auto &[begin, end, rule_type] = m_segment_edges[sig(i)];
 	return {m_str.begin()+begin, m_str.begin()+end, rule_type};
 }
+
+inline const std::vector<Segment_idx> Ustring::markup_array()
+{
+	markup();
+	return m_segment_edges;
+}
+
 
 inline void Ustring::set_segment_type(segment_type_e type,
 		segment_rule_t rule_mask,
