@@ -150,9 +150,10 @@ public:
 	cpnt_pos ssize_in_codepoints()const;
 	sgmnt_pos ssize_in_segments();
 	// 0 <= pos <= ssize_in_segments().
-	// Returns a first code point index of a segment with index pos
-	// or ssize_in_codepoints().
-	cpnt_pos sgmnt_to_cpntpos(sgmnt_pos pos);
+	// Returns a code point index of a segment with index pos
+	// or ssize_in_codepoints(). If begin==true, then returns
+	// a begin of segment, a end otherwise.
+	cpnt_pos sgmnt_to_cpntpos(sgmnt_pos pos, bool begin=true);
 	// 0 <= pos <= ssize_in_codepoints().
 	// Find a first segment following a position pos.
 	// If pos is inside a segment, then a index of
@@ -163,7 +164,7 @@ public:
 	Segment operator[](sgmnt_pos i);
 	std::vector<Segment_idx> markup_array();
 	// Sets a type of segments that are traversed with operator[].
-	// For segment_type_e::character the rule_mask is ignored.
+	// For segment_type_e::character rule_mask is ignored.
 	// full_select - see the reference information for
 	// boost::locale::boundary::segment_index::full_select.
 	// Default is (segment_type_e::character, 0, false).
@@ -280,13 +281,14 @@ inline Ustring::sgmnt_pos Ustring::ssize_in_segments()
 	return std::ssize(m_segment_edges);
 }
 
-inline Ustring::cpnt_pos Ustring::sgmnt_to_cpntpos(sgmnt_pos pos)
+inline Ustring::cpnt_pos Ustring::sgmnt_to_cpntpos(sgmnt_pos pos, bool begin)
 {
 	markup();
 	assert(pos <= std::ssize(m_segment_edges));
 	if (pos == std::ssize(m_segment_edges))
 		return std::ssize(m_str);
-	return m_segment_edges[sig(pos)].begin;
+	return begin  ?  m_segment_edges[sig(pos)].begin  :
+		m_segment_edges[sig(pos)].end;
 }
 
 inline Ustring::sgmnt_pos Ustring::cpnt_to_sgmntpos(cpnt_pos pos)

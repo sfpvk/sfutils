@@ -71,8 +71,11 @@ bool subtest_2()
 
 	TEST(std::wstring(us[0].begin, us[0].end) == L"\U0001F595\U0001F3FF");
 	
-	for (int i = 0;  i <= 3;  ++i)
-		TEST(us.sgmnt_to_cpntpos(i) == i * 2);
+	for (int i = 0;  i < 3;  ++i)
+		TEST(us.sgmnt_to_cpntpos(i) == i * 2  &&
+				us.sgmnt_to_cpntpos(i, false) == i * 2 + 2);
+	TEST(us.sgmnt_to_cpntpos(3) == 6  &&
+			us.sgmnt_to_cpntpos(3, false) == 6);
 
 	for (int i = 0;  i <= 6;  ++i)
 		TEST(us.cpnt_to_sgmntpos(i) == i / 2);
