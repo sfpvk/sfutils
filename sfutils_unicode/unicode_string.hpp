@@ -318,6 +318,13 @@ inline void Ustring::set_segment_type(segment_type_e type,
 		segment_rule_t rule_mask,
 		bool full_select)
 {
+	if (type == m_markup_mode  &&
+			full_select == m_full_select) {
+		if (type == segment_type_e::character) 
+			return;
+		if (rule_mask == m_rule_mask)
+			return;
+	}
 	m_markup_state = false;
 	m_markup_mode = type;
 	if (type == segment_type_e::character)
