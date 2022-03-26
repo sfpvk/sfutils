@@ -12,7 +12,8 @@
 namespace sfpvk::utils::unicode {
 
 
-inline int g_usym_width(const wchar_t *beg, const wchar_t *last)
+inline int g_usym_width(const wchar_t *beg,
+		[[maybe_unused]] const wchar_t *last)
 {
 	return wcwidth(*beg);
 }

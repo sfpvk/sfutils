@@ -335,7 +335,7 @@ inline void Ustring::reserve(ssize_t sz)
 inline void Ustring::insert(cpnt_pos index, wchar_t ch)
 {
 	assert(index <= std::ssize(m_str));
-	m_str.insert(index, 1, ch);
+	m_str.insert(sig(index), 1, ch);
 	m_markup_state = false;
 }
 
