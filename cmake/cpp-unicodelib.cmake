@@ -7,6 +7,7 @@ function(cpp_unicodelib_scope)
 	target_include_directories(${LIB_NAME} INTERFACE 
 		$<BUILD_INTERFACE:${SOURCE_ROOT}>
 		$<INSTALL_INTERFACE:${INSTALL_ROOT}>)
+	set_target_properties(${LIB_NAME} PROPERTIES EXPORT_NAME cpp-unicodelib)
 	add_library(${PROJECT_NAME}::cpp-unicodelib ALIAS ${LIB_NAME})
 
 	install(TARGETS ${LIB_NAME} EXPORT ${EXPORT_FILE})

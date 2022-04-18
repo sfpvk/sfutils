@@ -5,6 +5,7 @@ target_include_directories(${LIB_NAME} INTERFACE
 	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
 target_link_libraries(${LIB_NAME}
 	INTERFACE ${PROJECT_NAME}::common_options)
+set_target_properties(${LIB_NAME} PROPERTIES EXPORT_NAME base)
 add_library(${PROJECT_NAME}::base ALIAS ${LIB_NAME})
 
 install(TARGETS ${LIB_NAME} EXPORT ${EXPORT_FILE})
