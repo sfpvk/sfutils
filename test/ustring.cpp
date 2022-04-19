@@ -33,7 +33,7 @@ bool subtest_1()
 	TEST(compare_helper(us, MAKE_TEST_STR(U, TEST_STR)));
 	TEST(compare_helper(us, MAKE_TEST_STR(L, TEST_STR)));
 
-	std::wstring buf;
+	std::u32string buf;
 	us.to_string(&buf);
 	TEST(buf.size() == 16);
 
@@ -136,18 +136,18 @@ bool subtest_3()
 
 bool subtest_4()
 {
-	Ustring us{L"\U0001F610\U0001F3FC"};
-	us.push_back(L'\U0001F3FC');
-	us += L'\U0001F3FC';
-	us.insert(1, L'\U0001F3FC');
-	us.push_back(L'\U0001F3FC');
-	us += L'\U0001F3FC';
-	us.insert(1, L'\U0001F3FC');
+	Ustring us{U"\U0001F610\U0001F3FC"};
+	us.push_back(U'\U0001F3FC');
+	us += U'\U0001F3FC';
+	us.insert(1, U'\U0001F3FC');
+	us.push_back(U'\U0001F3FC');
+	us += U'\U0001F3FC';
+	us.insert(1, U'\U0001F3FC');
 	TEST(us.size() == 1);
-	us.push_back(L'=');
+	us.push_back('=');
 	TEST(us.size() == 2);
-	TEST(compare_helper(us, L"\U0001F610\U0001F3FC"
-				"\U0001F3FC\U0001F3FC\U0001F3FC="));
+	TEST(compare_helper(us, U"\U0001F610\U0001F3FC"
+				U"\U0001F3FC\U0001F3FC\U0001F3FC="));
 
 	return true;
 }

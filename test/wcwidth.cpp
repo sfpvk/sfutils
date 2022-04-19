@@ -15,7 +15,6 @@ using namespace sfpvk::utils::unicode;
 
 bool subtest_1()
 {
-	TEST(g_usym_width(U'\U0001F595') == 2);
 	TEST(g_usym_width(U'q') == 1);
 	
 	return true;
