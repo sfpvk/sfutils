@@ -7,6 +7,7 @@ function(common_options_and_procject_config_scope)
 	target_include_directories(${LIB_NAME} INTERFACE 
 		$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
 		$<INSTALL_INTERFACE:${INSTALL_ROOT}>)
+	set_target_properties(${LIB_NAME} PROPERTIES EXPORT_NAME common_options)
 	add_library(${PROJECT_NAME}::common_options ALIAS ${LIB_NAME})
 	install(TARGETS ${LIB_NAME} EXPORT ${EXPORT_FILE})
 
