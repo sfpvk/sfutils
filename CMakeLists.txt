@@ -1,7 +1,7 @@
 # Targets for external linking:
 # sfutils::base    - (include files under <sfutils/base/...>)
 # sfutils::unicode - (include files under <sfutils/unicode/...>)
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 project(sfutils)
 
 option(ENABLE_TESTING "Enable Testing" OFF)
