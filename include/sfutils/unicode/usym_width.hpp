@@ -17,7 +17,7 @@
 
 namespace sfpvk::utils::unicode {
 
-inline int g_usym_width(char32_t sym)
+inline int g_usym_width(wchar_t sym)
 {
 	return wcwidth(sym);
 }
