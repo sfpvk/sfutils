@@ -4,6 +4,8 @@
 #include <iterator>
 #include <utility>
 #include <cstring>
+#include <concepts>
+#include <type_traits>
 #include <cpp-unicodelib/unicodelib.h>
 #include "ustring_iterator.hpp"
 #include "encoding_cvt.hpp"
@@ -35,6 +37,7 @@ public:
 		Ustring &operator+=(const T &in);
 	template <typename T>
 		Ustring &operator+=(Grapheme_iterator<T> in);
+	Ustring &operator+=(const Ustring &in);
 	Ustring();
 	template <typename T>
 		Ustring(const T &in);
@@ -61,6 +64,7 @@ public:
 	template <typename T>
 		ssize_t insert(ssize_t index, const T &in);
 	template <typename T>
+		requires std::same_as<std::remove_const_t<T>, Ustring<Grapheme_size>>
 		ssize_t insert(ssize_t index, Grapheme_iterator<T> in);
 	void close_grapheme();
 private:
@@ -95,11 +99,20 @@ Ustring<Grapheme_size> &Ustring<Grapheme_size>::operator+=(const T &in)
 }
 
 template <ssize_t Grapheme_size>
-	template <typename T>
+template <typename T>
 Ustring<Grapheme_size> &
 Ustring<Grapheme_size>::operator+=(Grapheme_iterator<T> in)
 {
 	insert(std::ssize(m_data), in);
+	return *this;
+}
+
+template <ssize_t Grapheme_size>
+Ustring<Grapheme_size> &
+Ustring<Grapheme_size>::operator+=(const Ustring &in)
+{
+	for (auto b = in.begin();  b != in.end();  ++b)
+		this->operator+=(b);
 	return *this;
 }
 
@@ -244,7 +257,9 @@ ssize_t Ustring<Grapheme_size>::insert(ssize_t index, const T &in)
 
 template <ssize_t Grapheme_size>
 template <typename T>
-ssize_t Ustring<Grapheme_size>::insert(ssize_t index, Grapheme_iterator<T> in)
+requires std::same_as<std::remove_const_t<T>, Ustring<Grapheme_size>>
+ssize_t Ustring<Grapheme_size>::insert(ssize_t index,
+		Grapheme_iterator<T> in)
 {
 	Grapheme_cluster cluster;
 	memcpy(&cluster, &*in.begin(), sizeof(Grapheme_cluster));
