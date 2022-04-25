@@ -56,8 +56,8 @@ bool subtest_2()
 	Ustring us{L"qw\u0418\u0306er"};
 	TEST(us.size() == 5);
 	for (auto gr_it = us.begin();  gr_it != us.end();  ++gr_it)
-		for (char32_t &ch : gr_it)
-			ch = '0' + gr_it - us.begin();
+		for (auto cp = *gr_it;  cp != End_iterator_tag{};  ++cp)
+			*cp = '0' + gr_it - us.begin();
 	TEST(compare_helper(us, "012234"));
 
 	for (auto cp_it = us[2];  cp_it != End_iterator_tag{};  ++cp_it)
@@ -66,12 +66,12 @@ bool subtest_2()
 
 	auto gr_it = us.end();
 	-- gr_it;
-	TEST(*(gr_it -= 4).begin() == '0');
-	TEST(*(gr_it += 1).begin() == '1');
+	TEST(**(gr_it -= 4) == '0');
+	TEST(**(gr_it += 1) == '1');
 	++ gr_it;
-	*gr_it--.begin() = '6';
-	*gr_it++.begin() = '3';
-	*(gr_it-2).begin() = '8';
+	**gr_it-- = '6';
+	**gr_it++ = '3';
+	**(gr_it-2) = '8';
 	gr_it += 1;
 	*gr_it[1] = '0';
 	gr_it -= 1;

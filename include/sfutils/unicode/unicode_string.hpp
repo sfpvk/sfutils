@@ -262,7 +262,7 @@ ssize_t Ustring<Grapheme_size>::insert(ssize_t index,
 		Grapheme_iterator<T> in)
 {
 	Grapheme_cluster cluster;
-	memcpy(&cluster, &*in.begin(), sizeof(Grapheme_cluster));
+	memcpy(&cluster, &**in, sizeof(Grapheme_cluster));
 	m_data.insert(m_data.begin()+index, cluster);
 	close_grapheme();
 	return 1;

@@ -72,7 +72,7 @@ void g_cvt_from_utf32(Grapheme_iterator<T> begin,
 		std::string *o_out)
 {
 	for (;  begin != end;  ++begin)
-		for (auto cp_it = begin.begin();  cp_it != begin.end();  ++cp_it)
+		for (auto cp_it = *begin;  cp_it != End_iterator_tag{};  ++cp_it)
 			::unicode::utf8::encode_codepoint(*cp_it, *o_out);
 }
 
@@ -83,7 +83,7 @@ void g_cvt_from_utf32(Grapheme_iterator<T> begin,
 {
 	std::string buf;
 	for (;  begin != end;  ++begin)
-		for (auto cp_it = begin.begin();  cp_it != begin.end();  ++cp_it)
+		for (auto cp_it = *begin;  cp_it != End_iterator_tag{};  ++cp_it)
 			::unicode::utf8::encode_codepoint(*cp_it, buf);
 	o_out->insert(o_out->end(), buf.begin(), buf.end());
 }
@@ -94,7 +94,7 @@ void g_cvt_from_utf32(Grapheme_iterator<T> begin,
 		std::u16string *o_out)
 {
 	for (;  begin != end;  ++begin)
-		for (auto cp_it = begin.begin();  cp_it != begin.end();  ++cp_it)
+		for (auto cp_it = *begin;  cp_it != End_iterator_tag{};  ++cp_it)
 			::unicode::utf16::encode_codepoint(*cp_it, *o_out);
 }
 
@@ -104,7 +104,7 @@ void g_cvt_from_utf32(Grapheme_iterator<T> begin,
 		std::u32string *o_out)
 {
 	for (;  begin != end;  ++begin)
-		for (auto cp_it = begin.begin();  cp_it != begin.end();  ++cp_it)
+		for (auto cp_it = *begin;  cp_it != End_iterator_tag{};  ++cp_it)
 			(*o_out) += *cp_it;
 }
 
@@ -129,7 +129,7 @@ void g_cvt_from_utf32(Grapheme_iterator<T> begin,
 {
     std::u16string buf;
 	for (;  begin != end;  ++begin)
-		for (auto cp_it = begin.begin();  cp_it != begin.end();  ++cp_it)
+		for (auto cp_it = *begin;  cp_it != End_iterator_tag{};  ++cp_it)
 			(*o_out) += *cp_it;
 }
 

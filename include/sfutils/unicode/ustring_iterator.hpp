@@ -1,4 +1,5 @@
 #pragma once
+#include <type_traits>
 #include <sfutils/base/base.hpp>
 
 
@@ -11,7 +12,7 @@ template <typename T>
 struct Ustring_iterator_traits
 {
 	using cluster_t = typename T::Grapheme_cluster;
-	using code_point_reference_t = char32_t&;
+	using code_point_reference_t = char32_t &;
 	using grapheme_array_t = typename T::grapheme_array_t;
 };
 
@@ -19,7 +20,7 @@ template <typename T>
 struct Ustring_iterator_traits<const T>
 {
 	using cluster_t = const typename T::Grapheme_cluster;
-	using code_point_reference_t = const char32_t&;
+	using code_point_reference_t = const char32_t &;
 	using grapheme_array_t = const typename T::grapheme_array_t;
 };
 
@@ -41,11 +42,13 @@ public:
 	using reference = Ustring_iterator_traits<T>::code_point_reference_t;
 	Codepoint_iterator();
 	Codepoint_iterator(cluster_t *r_cluster);
+	Codepoint_iterator(cluster_t *r_cluster, ssize_t codepoint_pos);
 	Codepoint_iterator &operator++();
 	Codepoint_iterator operator++(int);
 	Codepoint_iterator &operator--();
 	Codepoint_iterator operator--(int);
 	reference operator*()const;
+	operator Codepoint_iterator<const std::remove_const_t<T>>()const;
 	template <typename U>
 	friend bool operator==(const Codepoint_iterator<U> &l,
 			const Codepoint_iterator<U> &r);
@@ -69,6 +72,14 @@ Codepoint_iterator<T>::
 Codepoint_iterator(cluster_t *r_cluster) :
 	m_cluster{r_cluster},
 	m_codepoint_pos{0}
+{
+}
+
+template <typename T>
+Codepoint_iterator<T>::
+Codepoint_iterator(cluster_t *r_cluster, ssize_t codepoint_pos) :
+	m_cluster{r_cluster},
+	m_codepoint_pos{codepoint_pos}
 {
 }
 
@@ -107,6 +118,14 @@ Codepoint_iterator<T>::reference
 Codepoint_iterator<T>::operator*()const
 {
 	return m_cluster->cp[m_codepoint_pos];
+}
+
+template <typename T>
+requires (! std::is_const_v<T>)
+Codepoint_iterator<T>::
+operator Codepoint_iterator<const std::remove_const_t<T>>()const
+{
+	return {m_cluster, m_codepoint_pos};
 }
 
 template <typename U>
@@ -155,20 +174,13 @@ public:
 	Grapheme_iterator operator--(int);
 	Grapheme_iterator &operator+=(difference_type n);
 	Grapheme_iterator &operator-=(difference_type n);
-	value_type operator*()const;
 	bool operator==(const Grapheme_iterator &)const = default;
 	auto operator <=>(const Grapheme_iterator &)const = default;
 	difference_type operator-(const Grapheme_iterator &r)const;
 	Grapheme_iterator operator-(difference_type n)const;
+	value_type operator*()const;
 	value_type operator[](difference_type n)const;
-	value_type begin()const;
-	static End_iterator_tag end();
-	template <typename U>
-		friend bool operator==(const Grapheme_iterator<U> &l,
-				End_iterator_tag r);
-	template <typename U>
-		friend bool operator==(End_iterator_tag l,
-				const Grapheme_iterator<U> &r);
+	operator Grapheme_iterator<const std::remove_const_t<T>>()const;
 	template <typename U>
 		friend Grapheme_iterator<U> operator+(const Grapheme_iterator<U> &l,
 				ssize_t r);
@@ -238,12 +250,6 @@ Grapheme_iterator<T> &Grapheme_iterator<T>::operator-=(difference_type n)
 }
 
 template <typename T>
-Grapheme_iterator<T>::value_type Grapheme_iterator<T>::operator*()const
-{
-	return {&(*m_graphemes)[sig(m_cluster_pos)]};
-}
-
-template <typename T>
 Grapheme_iterator<T>::difference_type
 Grapheme_iterator<T>::operator-(const Grapheme_iterator &r)const
 {
@@ -257,6 +263,12 @@ Grapheme_iterator<T> Grapheme_iterator<T>::operator-(difference_type n)const
 }
 
 template <typename T>
+Grapheme_iterator<T>::value_type Grapheme_iterator<T>::operator*()const
+{
+	return {&(*m_graphemes)[sig(m_cluster_pos)]};
+}
+
+template <typename T>
 Grapheme_iterator<T>::value_type
 Grapheme_iterator<T>::operator[](difference_type n)const
 {
@@ -265,29 +277,11 @@ Grapheme_iterator<T>::operator[](difference_type n)const
 }
 
 template <typename T>
-Grapheme_iterator<T>::value_type Grapheme_iterator<T>::begin()const
+requires (! std::is_const_v<T>)
+Grapheme_iterator<T>::
+operator Grapheme_iterator<const std::remove_const_t<T>>()const
 {
-	return operator*();
-}
-
-template <typename T>
-End_iterator_tag Grapheme_iterator<T>::end()
-{
-	return End_iterator_tag{};
-}
-
-template <typename U>
-bool operator==(const Grapheme_iterator<U> &l,
-		End_iterator_tag r)
-{
-	return sig(l.m_graphemes->size()) == l.m_cluster_pos;
-}
-
-template <typename U>
-bool operator==(End_iterator_tag l,
-		const Grapheme_iterator<U> &r)
-{
-	return sig(r.m_graphemes->size()) == r.m_cluster_pos;
+	return {m_graphemes, m_cluster_pos};
 }
 
 template <typename U>
