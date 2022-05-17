@@ -1,4 +1,5 @@
 #pragma once
+#include <limits>
 #include <sfutils_config.h>
 #ifdef HAVE_WCWIDTH
 #  ifndef _XOPEN_SOURCE
@@ -17,8 +18,10 @@
 
 namespace sfpvk::utils::unicode {
 
-inline int g_usym_width(wchar_t sym)
+inline int g_usym_width(char32_t sym)
 {
+	if (sym > static_cast<char32_t>(std::numeric_limits<wchar_t>::max()))
+		return 0;
 	return wcwidth(sym);
 }
 
