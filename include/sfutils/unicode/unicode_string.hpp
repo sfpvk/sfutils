@@ -3,7 +3,6 @@
 #include <string>
 #include <iterator>
 #include <utility>
-#include <cstring>
 #include <concepts>
 #include <type_traits>
 #include <cpp-unicodelib/unicodelib.h>
@@ -64,7 +63,6 @@ public:
 	template <typename T>
 		ssize_t insert(ssize_t index, const T &in);
 	template <typename T>
-		requires std::same_as<std::remove_const_t<T>, Ustring<Grapheme_size>>
 		ssize_t insert(ssize_t index, Grapheme_iterator<T> in);
 	void close_grapheme();
 private:
@@ -259,12 +257,17 @@ ssize_t Ustring<Grapheme_size>::insert(ssize_t index, const T &in)
 
 template <ssize_t Grapheme_size>
 template <typename T>
-requires std::same_as<std::remove_const_t<T>, Ustring<Grapheme_size>>
 ssize_t Ustring<Grapheme_size>::insert(ssize_t index,
 		Grapheme_iterator<T> in)
 {
 	Grapheme_cluster cluster;
-	memcpy(&cluster, &**in, sizeof(Grapheme_cluster));
+	ssize_t cl_pos = 0;
+	for (auto i = *in;  i != End_iterator_tag{}
+			&&  cl_pos != Grapheme_size;
+			++i, ++cl_pos)
+		cluster.cp[cl_pos] = *i;
+	for (;  cl_pos != Grapheme_size;  ++cl_pos)
+		cluster.cp[cl_pos] = s_grapheme_end_tag;
 	m_data.insert(m_data.begin()+index, cluster);
 	close_grapheme();
 	return 1;

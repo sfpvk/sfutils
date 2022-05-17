@@ -12,8 +12,8 @@ using namespace sfpvk::utils::unicode;
 		return false;\
 	}
 
-template <typename T>
-bool compare_helper(const Ustring<5> &us, const T *r)
+template <ssize_t Sz, typename T>
+bool compare_helper(const Ustring<Sz> &us, const T *r)
 {
 	std::basic_string<T> buf;
 	us.to_string(&buf);
@@ -152,6 +152,25 @@ bool subtest_4()
 	return true;
 }
 
+bool subtest_5()
+{
+	Ustring<1> us1{U"\U0001F610\U0001F3FC\U0001F3FC\U0001F3FC\U0001F3FC="};
+	Ustring<2> us2;
+	Ustring<4> us4{U"\U0001F610\U0001F3FC\U0001F3FC\U0001F3FC\U0001F3FC="};
+	TEST(us1.size() == 2  &&  us4.size() == 2);
+	us2.insert(0, us1.begin());
+	us2.push_back(us1.begin() + 1);
+	us1.clear();
+	us1.push_back(us4.begin());
+	us1.push_back(us4.begin() + 1);
+	TEST(us1.size() == 2  &&  us2.size() == 2  &&  us4.size() == 2);
+	TEST(compare_helper(us1, U"\U0001F610="));
+	TEST(compare_helper(us2, U"\U0001F610="));
+	TEST(compare_helper(us4, U"\U0001F610\U0001F3FC\U0001F3FC\U0001F3FC="));
+
+	return true;
+}
+
 int main()
 {
 	if (! subtest_1())
@@ -161,5 +180,7 @@ int main()
 	if (! subtest_3())
 		return 1;
 	if (! subtest_4())
+		return 1;
+	if (! subtest_5())
 		return 1;
 }
