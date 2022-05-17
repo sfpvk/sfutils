@@ -163,54 +163,56 @@ bool Ustring<Grapheme_size>::empty()const
 }
 
 template <ssize_t Grapheme_size>
-Ustring<Grapheme_size>::const_grapheme_iterator_t
+typename Ustring<Grapheme_size>::const_grapheme_iterator_t
 Ustring<Grapheme_size>::begin()const
 {
 	return {&m_data, 0};
 }
 
 template <ssize_t Grapheme_size>
-Ustring<Grapheme_size>::const_grapheme_iterator_t
+typename Ustring<Grapheme_size>::const_grapheme_iterator_t
 Ustring<Grapheme_size>::end()const
 {
 	return {&m_data, std::ssize(m_data)};
 }
 
 template <ssize_t Grapheme_size>
-Ustring<Grapheme_size>::grapheme_iterator_t Ustring<Grapheme_size>::begin()
+typename Ustring<Grapheme_size>::grapheme_iterator_t Ustring<Grapheme_size>::
+begin()
 {
 	return {&m_data, 0};
 }
 
 template <ssize_t Grapheme_size>
-Ustring<Grapheme_size>::grapheme_iterator_t Ustring<Grapheme_size>::end()
+typename Ustring<Grapheme_size>::grapheme_iterator_t Ustring<Grapheme_size>::
+end()
 {
 	return {&m_data, std::ssize(m_data)};
 }
 
 template <ssize_t Grapheme_size>
-Ustring<Grapheme_size>::const_grapheme_iterator_t
+typename Ustring<Grapheme_size>::const_grapheme_iterator_t
 Ustring<Grapheme_size>::cbegin()const
 {
 	return {&m_data, 0};
 }
 
 template <ssize_t Grapheme_size>
-Ustring<Grapheme_size>::const_grapheme_iterator_t
+typename Ustring<Grapheme_size>::const_grapheme_iterator_t
 Ustring<Grapheme_size>::cend()const
 {
 	return {&m_data, std::ssize(m_data)};
 }
 
 template <ssize_t Grapheme_size>
-Ustring<Grapheme_size>::const_codepoint_iterator_t
+typename Ustring<Grapheme_size>::const_codepoint_iterator_t
 Ustring<Grapheme_size>::operator[](ssize_t i)const
 {
 	return {&m_data[i]};
 }
 
 template <ssize_t Grapheme_size>
-Ustring<Grapheme_size>::codepoint_iterator_t
+typename Ustring<Grapheme_size>::codepoint_iterator_t
 Ustring<Grapheme_size>::operator[](ssize_t i)
 {
 	return {&m_data[i]};

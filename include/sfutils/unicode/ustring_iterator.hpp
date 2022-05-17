@@ -32,14 +32,15 @@ class Codepoint_iterator
 {
 	static constexpr ssize_t s_grapheme_sz = T::s_grapheme_sz;
 	static constexpr char32_t s_grapheme_end_tag = T::s_grapheme_end_tag;
-	using cluster_t = Ustring_iterator_traits<T>::cluster_t;
+	using cluster_t = typename Ustring_iterator_traits<T>::cluster_t;
 	cluster_t *m_cluster;
 	ssize_t m_codepoint_pos;
 public:
 	using iterator_category = std::bidirectional_iterator_tag;
 	using difference_type = ssize_t;
 	using value_type = char32_t;
-	using reference = Ustring_iterator_traits<T>::code_point_reference_t;
+	using reference = typename Ustring_iterator_traits<T>::
+		code_point_reference_t;
 	Codepoint_iterator();
 	Codepoint_iterator(cluster_t *r_cluster);
 	Codepoint_iterator(cluster_t *r_cluster, ssize_t codepoint_pos);
@@ -48,7 +49,8 @@ public:
 	Codepoint_iterator &operator--();
 	Codepoint_iterator operator--(int);
 	reference operator*()const;
-	operator Codepoint_iterator<const std::remove_const_t<T>>()const;
+	operator Codepoint_iterator<const std::remove_const_t<T>>()const
+		requires (! std::is_const_v<T>);
 	template <typename U>
 	friend bool operator==(const Codepoint_iterator<U> &l,
 			const Codepoint_iterator<U> &r);
@@ -114,16 +116,16 @@ Codepoint_iterator<T> Codepoint_iterator<T>::operator--(int)
 }
 
 template <typename T>
-Codepoint_iterator<T>::reference
+typename Codepoint_iterator<T>::reference
 Codepoint_iterator<T>::operator*()const
 {
 	return m_cluster->cp[m_codepoint_pos];
 }
 
 template <typename T>
-requires (! std::is_const_v<T>)
 Codepoint_iterator<T>::
 operator Codepoint_iterator<const std::remove_const_t<T>>()const
+requires (! std::is_const_v<T>)
 {
 	return {m_cluster, m_codepoint_pos};
 }
@@ -158,7 +160,8 @@ bool operator==(End_iterator_tag,
 template <typename T>
 class Grapheme_iterator
 {
-	using grapheme_array_t = Ustring_iterator_traits<T>::grapheme_array_t;
+	using grapheme_array_t = typename Ustring_iterator_traits<T>::
+		grapheme_array_t;
 	grapheme_array_t *m_graphemes;
 	ssize_t m_cluster_pos;
 public:
@@ -180,7 +183,8 @@ public:
 	Grapheme_iterator operator-(difference_type n)const;
 	value_type operator*()const;
 	value_type operator[](difference_type n)const;
-	operator Grapheme_iterator<const std::remove_const_t<T>>()const;
+	operator Grapheme_iterator<const std::remove_const_t<T>>()const
+		requires (! std::is_const_v<T>);
 	template <typename U>
 		friend Grapheme_iterator<U> operator+(const Grapheme_iterator<U> &l,
 				ssize_t r);
@@ -250,7 +254,7 @@ Grapheme_iterator<T> &Grapheme_iterator<T>::operator-=(difference_type n)
 }
 
 template <typename T>
-Grapheme_iterator<T>::difference_type
+typename Grapheme_iterator<T>::difference_type
 Grapheme_iterator<T>::operator-(const Grapheme_iterator &r)const
 {
 	return m_cluster_pos - r.m_cluster_pos;
@@ -263,13 +267,13 @@ Grapheme_iterator<T> Grapheme_iterator<T>::operator-(difference_type n)const
 }
 
 template <typename T>
-Grapheme_iterator<T>::value_type Grapheme_iterator<T>::operator*()const
+typename Grapheme_iterator<T>::value_type Grapheme_iterator<T>::operator*()const
 {
 	return {&(*m_graphemes)[sig(m_cluster_pos)]};
 }
 
 template <typename T>
-Grapheme_iterator<T>::value_type
+typename Grapheme_iterator<T>::value_type
 Grapheme_iterator<T>::operator[](difference_type n)const
 {
 	auto idx = sig(m_cluster_pos + n);
@@ -277,9 +281,9 @@ Grapheme_iterator<T>::operator[](difference_type n)const
 }
 
 template <typename T>
-requires (! std::is_const_v<T>)
 Grapheme_iterator<T>::
 operator Grapheme_iterator<const std::remove_const_t<T>>()const
+requires (! std::is_const_v<T>)
 {
 	return {m_graphemes, m_cluster_pos};
 }
