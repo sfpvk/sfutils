@@ -40,6 +40,9 @@ bool subtest_1()
 	Ustring us2;
 	TEST(us2.empty());
 	TEST(! us2.ssize());
+	us2 = "";
+	TEST(us2.empty());
+	TEST(! us2.ssize());
 	us2 = "hello";
 	us2 += " world";
 	TEST(compare_helper(us2, "hello world")  &&

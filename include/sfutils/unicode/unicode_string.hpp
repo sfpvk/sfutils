@@ -284,6 +284,9 @@ template <ssize_t Grapheme_size>
 ssize_t Ustring<Grapheme_size>::insert_base(ssize_t pos)
 {
 	ssize_t inscluster_cnt = 0;
+	if (m_cvt_buf.empty())
+		return inscluster_cnt;
+
 	auto insert_cluster = [&]() {
 		auto get_end = [&](ssize_t) {return s_grapheme_end_tag;};
 		[&]<ssize_t ...I>(std::integer_sequence<ssize_t, I...>) {
