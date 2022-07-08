@@ -1,17 +1,8 @@
-#include <iostream>
-#include <clocale>
 #include <sfutils/unicode/usym_width.hpp>
+#include "base.hpp"
 
 using namespace sfpvk::utils::unicode;
 
-
-#define STR_(a) #a
-#define STR(a) STR_(a)
-#define TEST(e)\
-	if (!(e)) {\
-		std::cerr << "Test at line " STR(__LINE__) " is failed" << std::endl;\
-		return false;\
-	}
 
 bool subtest_1()
 {
@@ -22,7 +13,6 @@ bool subtest_1()
 
 int main()
 {
-	setlocale(LC_ALL, "en_US.UTF-8");
 	if (! subtest_1())
 		return 1;
 }

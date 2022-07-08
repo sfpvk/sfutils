@@ -1,11 +1,7 @@
 #pragma once
 #include <deque>
-#include <string>
-#include <iterator>
 #include <utility>
-#include <concepts>
-#include <type_traits>
-#include <cpp-unicodelib/unicodelib.h>
+#include <utf8proc.h>
 #include "ustring_iterator.hpp"
 #include "encoding_cvt.hpp"
 
@@ -27,22 +23,29 @@ public:
 	using grapheme_iterator_t = Grapheme_iterator<Ustring>;
 	using const_codepoint_iterator_t = Codepoint_iterator<const Ustring>;
 	using codepoint_iterator_t = Codepoint_iterator<Ustring>;
-	static constexpr char32_t s_grapheme_end_tag = -1;
+	static constexpr char32_t s_grapheme_end_tag = char32_t(-1);
 	static constexpr ssize_t s_grapheme_sz = Grapheme_size;
 public:
-	template <typename T>
+	template <Cvt_endian::cvt_endian_t endian_mode=Cvt_endian::from_native,
+			 typename T>
 		Ustring &operator=(const T &in);
-	template <typename T>
+	template <Cvt_endian::cvt_endian_t endian_mode=Cvt_endian::from_native,
+			 typename T>
 		Ustring &operator+=(const T &in);
 	template <typename T>
 		Ustring &operator+=(Grapheme_iterator<T> in);
 	Ustring &operator+=(const Ustring &in);
 	Ustring();
-	template <typename T>
-		Ustring(const T &in);
-	template <typename CharT>
+	template <typename T,
+			 typename Endian=std::integral_constant<Cvt_endian::cvt_endian_t, 
+				 Cvt_endian::from_native>>
+		Ustring(const T &in, Endian endian_mode={});
+
+	template <Cvt_endian::cvt_endian_t endian_mode=Cvt_endian::to_native,
+			 typename CharT>
 		void to_string(std::basic_string<CharT> *o_dest,
 				ssize_t begin_pos=0, ssize_t count=-1)const;
+
 	ssize_t ssize()const;
 	std::size_t size()const;
 	bool empty()const;
@@ -56,11 +59,13 @@ public:
 	codepoint_iterator_t operator[](ssize_t i);
 	void erase(ssize_t begin, ssize_t end);
 	void clear();
-	template <typename T>
+	template <Cvt_endian::cvt_endian_t endian_mode=Cvt_endian::from_native,
+			 typename T>
 		ssize_t push_back(const T &in);
 	template <typename T>
 		ssize_t push_back(Grapheme_iterator<T> in);
-	template <typename T>
+	template <Cvt_endian::cvt_endian_t endian_mode=Cvt_endian::from_native,
+			 typename T>
 		ssize_t insert(ssize_t index, const T &in);
 	template <typename T>
 		ssize_t insert(ssize_t index, Grapheme_iterator<T> in);
@@ -71,27 +76,32 @@ private:
 	std::u32string m_overflow_buf;
 	ssize_t m_insert_cluster_pos;
 	ssize_t m_insert_codepoint_size;
+	utf8proc_int32_t m_grapheme_break_state;
 	ssize_t insert_base(ssize_t pos);
 };
 
 template <ssize_t Grapheme_size>
-template <typename T>
+template <Cvt_endian::cvt_endian_t endian_mode, typename T>
 Ustring<Grapheme_size> &Ustring<Grapheme_size>::operator=(const T &in)
 {
+	static_assert(((Cvt_endian::to_little|Cvt_endian::to_big)
+			& endian_mode) == 0);
 	m_data.clear();
 	close_grapheme();
 	m_cvt_buf.clear();
-	g_cvt_to_utf32(in, &m_cvt_buf);
+	g_cvt<endian_mode>(in, &m_cvt_buf);
 	insert_base(0);
 	return *this;
 }
 
 template <ssize_t Grapheme_size>
-template <typename T>
+template <Cvt_endian::cvt_endian_t endian_mode, typename T>
 Ustring<Grapheme_size> &Ustring<Grapheme_size>::operator+=(const T &in)
 {
+	static_assert(((Cvt_endian::to_little|Cvt_endian::to_big)
+			& endian_mode) == 0);
 	m_cvt_buf.clear();
-	g_cvt_to_utf32(in, &m_cvt_buf);
+	g_cvt<endian_mode>(in, &m_cvt_buf);
 	insert_base(std::ssize(m_data));
 	return *this;
 }
@@ -121,17 +131,38 @@ Ustring<Grapheme_size>::Ustring()
 }
 
 template <ssize_t Grapheme_size>
-template <typename T>
-Ustring<Grapheme_size>::Ustring(const T &in) : Ustring{}
+template <typename T, typename Endian>
+Ustring<Grapheme_size>::Ustring(const T &in, Endian endian_mode) : Ustring{}
 {
-	this->operator=(in);
+	this->operator=<endian_mode>(in);
 }
 
 template <ssize_t Grapheme_size>
-template <typename CharT>
+template <Cvt_endian::cvt_endian_t endian_mode,
+		 typename CharT>
 void Ustring<Grapheme_size>::to_string(std::basic_string<CharT> *o_dest,
 		ssize_t begin_pos, ssize_t count)const
 {
+	static_assert(((Cvt_endian::from_little|Cvt_endian::from_big)
+			& endian_mode) == 0);
+
+	struct Buf {
+		std::array<char32_t, Grapheme_size*100> buf;
+		ssize_t sz = 0;
+	} buf;
+	auto push_to_buf = [&](const char32_t *beg, const char32_t *end) -> bool {
+		if (std::ssize(buf.buf)-buf.sz < end-beg)
+			return false;
+		std::ranges::copy(beg, end, buf.buf.data()+buf.sz);
+		buf.sz += end - beg;
+		return true;
+	};
+	auto flush_buf = [&]() {
+		g_cvt<endian_mode>(std::u32string_view(buf.buf.data(), buf.sz),
+				o_dest);
+		buf.sz = 0;
+	};
+
 	const_grapheme_iterator_t beg_it = cbegin() + begin_pos;
 	const_grapheme_iterator_t end_it;
 	if (count != -1)
@@ -139,7 +170,17 @@ void Ustring<Grapheme_size>::to_string(std::basic_string<CharT> *o_dest,
 	else
 		end_it = cbegin() + std::ssize(m_data);
 
-	g_cvt_from_utf32(beg_it, end_it, o_dest);
+	for (;  beg_it != end_it;  ++beg_it) {
+		auto cp_beg = *beg_it;
+		auto cp_end = *beg_it;
+		for (;  cp_end != End_iterator_tag{};  ++cp_end);
+		while (true)
+			if (! push_to_buf(&*cp_beg, &*cp_beg+(cp_end-cp_beg)))
+				flush_buf();
+			else
+				break;
+	}
+	flush_buf();
 }
 
 template <ssize_t Grapheme_size>
@@ -231,11 +272,13 @@ void Ustring<Grapheme_size>::clear()
 }
 
 template <ssize_t Grapheme_size>
-template <typename T>
+template <Cvt_endian::cvt_endian_t endian_mode, typename T>
 ssize_t Ustring<Grapheme_size>::push_back(const T &in)
 {
+	static_assert(((Cvt_endian::to_little|Cvt_endian::to_big)
+			& endian_mode) == 0);
 	m_cvt_buf.clear();
-	g_cvt_to_utf32(in, &m_cvt_buf);
+	g_cvt<endian_mode>(in, &m_cvt_buf);
 	return insert_base(std::ssize(m_data));
 }
 
@@ -247,11 +290,13 @@ ssize_t Ustring<Grapheme_size>::push_back(Grapheme_iterator<T> in)
 }
 
 template <ssize_t Grapheme_size>
-template <typename T>
+template <Cvt_endian::cvt_endian_t endian_mode, typename T>
 ssize_t Ustring<Grapheme_size>::insert(ssize_t index, const T &in)
 {
+	static_assert(((Cvt_endian::to_little|Cvt_endian::to_big)
+			& endian_mode) == 0);
 	m_cvt_buf.clear();
-	g_cvt_to_utf32(in, &m_cvt_buf);
+	g_cvt<endian_mode>(in, &m_cvt_buf);
 	return insert_base(index);
 }
 
@@ -278,6 +323,7 @@ void Ustring<Grapheme_size>::close_grapheme()
 {
 	m_insert_cluster_pos = -2;
 	m_insert_codepoint_size = 0;
+	m_grapheme_break_state = 0;
 }
 
 template <ssize_t Grapheme_size>
@@ -294,11 +340,11 @@ ssize_t Ustring<Grapheme_size>::insert_base(ssize_t pos)
 					Grapheme_cluster{get_end(I)...});
 		}(std::make_integer_sequence<ssize_t, Grapheme_size>());
 		++ inscluster_cnt;
+		m_insert_codepoint_size = 0;
 	};
 	auto push_sym = [&](char32_t sym) {
-		if (m_insert_codepoint_size < Grapheme_size) {
+		if (m_insert_codepoint_size < Grapheme_size)
 			m_data[m_insert_cluster_pos].cp[m_insert_codepoint_size] = sym;
-		}
 		else {
 			if (m_insert_codepoint_size == Grapheme_size) {
 				m_overflow_buf.clear();
@@ -314,17 +360,18 @@ ssize_t Ustring<Grapheme_size>::insert_base(ssize_t pos)
 		if (m_insert_codepoint_size == 1)
 			return false;
 		if (m_insert_codepoint_size > Grapheme_size)
-			return ::unicode::is_grapheme_boundary(m_overflow_buf.c_str(),
-					m_overflow_buf.size(),
-					m_insert_codepoint_size-1);
-		return ::unicode::is_grapheme_boundary(m_data[m_insert_cluster_pos].cp,
-				m_insert_codepoint_size,
-				m_insert_codepoint_size-1);
+			return utf8proc_grapheme_break_stateful(
+					m_overflow_buf[m_insert_codepoint_size-2],
+					m_overflow_buf[m_insert_codepoint_size-1],
+					&m_grapheme_break_state);
+		return utf8proc_grapheme_break_stateful(
+				m_data[m_insert_cluster_pos].cp[m_insert_codepoint_size-2],
+				m_data[m_insert_cluster_pos].cp[m_insert_codepoint_size-1],
+				&m_grapheme_break_state);
 	};
 
 	if (pos - m_insert_cluster_pos != 1) {
 		m_insert_cluster_pos = pos;
-		m_insert_codepoint_size = 0;
 		insert_cluster();
 	}
 	for (char32_t sym : m_cvt_buf) {
@@ -334,7 +381,6 @@ ssize_t Ustring<Grapheme_size>::insert_base(ssize_t pos)
 				m_data[m_insert_cluster_pos].cp[m_insert_codepoint_size-1] =
 					s_grapheme_end_tag;
 			++ m_insert_cluster_pos;
-			m_insert_codepoint_size = 0;
 			insert_cluster();
 			push_sym(sym);
 		}

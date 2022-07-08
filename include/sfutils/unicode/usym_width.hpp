@@ -1,28 +1,13 @@
 #pragma once
 #include <limits>
-#include <sfutils_config.h>
-#ifdef HAVE_WCWIDTH
-#  ifndef _XOPEN_SOURCE
-#    define _XOPEN_SOURCE
-#    define SFPVK_UNDEF_XOPEN_SOURCE
-#  endif
-#  include <wchar.h>
-#  ifdef SFPVK_UNDEF_XOPEN_SOURCE
-#    undef _XOPEN_SOURCE
-#    undef SFPVK_UNDEF_XOPEN_SOURCE
-#  endif
-#else
-	extern "C" int wcwidth(wchar_t ucs);
-#endif
+#include <utf8proc.h>
 
 
 namespace sfpvk::utils::unicode {
 
 inline int g_usym_width(char32_t sym)
 {
-	if (sym > static_cast<char32_t>(std::numeric_limits<wchar_t>::max()))
-		return 0;
-	return wcwidth(sym);
+	return utf8proc_charwidth(sym);
 }
 
 } //sfpvk::utils::unicode

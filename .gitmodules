@@ -1,6 +1,0 @@
-[submodule "extern/cpp-unicodelib"]
-	path = extern/cpp-unicodelib
-	url = https://github.com/yhirose/cpp-unicodelib.git
-[submodule "extern/wcwidth"]
-	path = extern/wcwidth
-	url = https://github.com/termux/wcwidth.git

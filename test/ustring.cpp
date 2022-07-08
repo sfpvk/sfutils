@@ -1,16 +1,8 @@
-#include <iostream>
 #include <sfutils/unicode/unicode_string.hpp>
+#include "base.hpp"
 
 using namespace sfpvk::utils::unicode;
 
-
-#define STR_(a) #a
-#define STR(a) STR_(a)
-#define TEST(e)\
-	if (!(e)) {\
-		std::cerr << "Test at line " STR(__LINE__) " is failed" << std::endl;\
-		return false;\
-	}
 
 template <ssize_t Sz, typename T>
 bool compare_helper(const Ustring<Sz> &us, const T *r)

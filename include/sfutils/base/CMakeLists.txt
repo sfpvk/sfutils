@@ -2,7 +2,8 @@ set(LIB_NAME ${PROJECT_NAME}_base)
 
 add_library(${LIB_NAME} INTERFACE)
 target_include_directories(${LIB_NAME} INTERFACE 
-	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:include>)
 target_link_libraries(${LIB_NAME}
 	INTERFACE ${PROJECT_NAME}::common_options)
 set_target_properties(${LIB_NAME} PROPERTIES EXPORT_NAME base)

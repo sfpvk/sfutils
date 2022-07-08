@@ -6,13 +6,14 @@ project(sfutils)
 
 option(ENABLE_TESTING "Enable Testing" OFF)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(utf8proc REQUIRED libutf8proc)
+
 include(GNUInstallDirs)
 
 set(EXPORT_FILE ${PROJECT_NAME}Config)
-include(cmake/check_features.cmake)
-include(cmake/common_options_and_procject_config.cmake)
-include(cmake/cpp-unicodelib.cmake)
-include(cmake/wcwidth.cmake)
+
+include(cmake/common_options.cmake)
 add_subdirectory(include/sfutils/base)
 add_subdirectory(include/sfutils/unicode)
 

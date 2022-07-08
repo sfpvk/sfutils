@@ -1,6 +1,5 @@
 #pragma once
 #include <type_traits>
-#include <sfutils/base/base.hpp>
 
 
 namespace sfpvk::utils::unicode {
@@ -49,6 +48,7 @@ public:
 	Codepoint_iterator &operator--();
 	Codepoint_iterator operator--(int);
 	reference operator*()const;
+	difference_type operator-(const Codepoint_iterator &r)const;
 	operator Codepoint_iterator<const std::remove_const_t<T>>()const
 		requires (! std::is_const_v<T>);
 	template <typename U>
@@ -120,6 +120,13 @@ typename Codepoint_iterator<T>::reference
 Codepoint_iterator<T>::operator*()const
 {
 	return m_cluster->cp[m_codepoint_pos];
+}
+
+template <typename T>
+Codepoint_iterator<T>::difference_type Codepoint_iterator<T>::operator-(
+		const Codepoint_iterator &r)const
+{
+	return m_codepoint_pos - r.m_codepoint_pos;
 }
 
 template <typename T>
@@ -269,14 +276,14 @@ Grapheme_iterator<T> Grapheme_iterator<T>::operator-(difference_type n)const
 template <typename T>
 typename Grapheme_iterator<T>::value_type Grapheme_iterator<T>::operator*()const
 {
-	return {&(*m_graphemes)[sig(m_cluster_pos)]};
+	return {&(*m_graphemes)[m_cluster_pos]};
 }
 
 template <typename T>
 typename Grapheme_iterator<T>::value_type
 Grapheme_iterator<T>::operator[](difference_type n)const
 {
-	auto idx = sig(m_cluster_pos + n);
+	ssize_t idx = m_cluster_pos + n;
 	return {&(*m_graphemes)[idx]};
 }
 
