@@ -124,17 +124,11 @@ namespace details {
 	template <Cvt_endian::cvt_endian_t endian=
 			Cvt_endian::from_native|Cvt_endian::to_native,
 		CharType From, CharType To>
-	bool g_cvt_base(const From *beg, std::size_t sz,
-			std::basic_string<To> *o_out)
+	ssize_t g_cvt_base(const From *beg, ssize_t sz,
+			std::basic_string<To> *o_out, ssize_t max_out_cnt=-1)
 	{
-		if constexpr (std::is_same_v<From, To>
-				&&  ((endian & Cvt_endian::from_little
-						&&  endian & Cvt_endian::to_little)
-					||  (endian & Cvt_endian::from_big  &&
-						endian & Cvt_endian::to_big))) {
-			o_out->append(beg, beg+sz);
-			return true;
-		}
+		if (max_out_cnt == 0)
+			return 0;
 
 		class Convdesc{
 		public:
@@ -146,117 +140,167 @@ namespace details {
 		} static thread_local const cdesc{
 			create_convdescriptor<endian, From, To>()};
 		if (cdesc.cd == convdesc_t(-1))
-			return false;
+			return -1;
 
-		std::size_t ipos = 0;
 		struct Ibuf {
 			std::array<From, 500> buf;
 			char *ptr;
+			ssize_t pos = 0;
 			std::size_t left = 0;
+			ssize_t read_cnt;
 		} ibuf;
-		auto fill_buf = [&]() -> bool {
+		auto ibuf_ctr = [&]() {
+			if (max_out_cnt != -1) {
+				int k = sizeof(To) / sizeof(From);
+				if (! k)
+					k = 1;
+				ibuf.read_cnt = max_out_cnt * k;
+				if (ibuf.read_cnt < 4)
+					ibuf.read_cnt = 4;
+				else if (ibuf.read_cnt > std::ssize(ibuf.buf))
+					ibuf.read_cnt = std::ssize(ibuf.buf);
+			}
+			else
+				ibuf.read_cnt = std::ssize(ibuf.buf);
+		};
+		auto ibuf_unget = [&]() {
+			ibuf.pos -= ibuf.left / sizeof(From);
+		};
+		auto ibuf_fill = [&]() -> bool {
 			assert(ibuf.left % sizeof(From) == 0);
-			if (ipos == sz)
+			if (ibuf.pos == sz)
 				return false;
-			ipos -= ibuf.left / sizeof(From);
-			ibuf.left = ibuf.buf.size() * sizeof(From);
-			std::size_t total_sz = (sz - ipos) * sizeof(From);
+			ibuf_unget();
+			ibuf.left = ibuf.read_cnt * sizeof(From);
+			std::size_t total_sz = (sz - ibuf.pos) * sizeof(From);
 			if (total_sz < ibuf.left)
 				ibuf.left = total_sz;
 			std::size_t left_in_chars = ibuf.left / sizeof(From);
-			std::ranges::copy(beg+ipos, beg+ipos+left_in_chars,
+			std::ranges::copy(beg+ibuf.pos, beg+ibuf.pos+left_in_chars,
 					ibuf.buf.data());
-			ipos += left_in_chars;
+			ibuf.pos += left_in_chars;
 			// Conversion to char pointer is allowed,
 			// it doesn't violate strict aliasing rules.
 			ibuf.ptr = reinterpret_cast<char *>(ibuf.buf.data());
 			return true;
 		};
-		if (! fill_buf())
-			return true;
+		ibuf_ctr();
+		if (! ibuf_fill())
+			return 0;
 
 		struct Obuf {
 			std::array<To, 500> buf;
-			char *ptr;
-			std::size_t left = buf.size() * sizeof(To);
+			char *ptr = nullptr;
+			std::size_t left = 0;
+			ssize_t sz = 0;
 		} obuf;
-		auto flush_buf = [&]() {
+		auto obuf_flush = [&]() -> bool {
 			assert(obuf.left % sizeof(To) == 0);
-			o_out->append(obuf.buf.data(),
-					obuf.buf.data()+obuf.buf.size()-obuf.left/sizeof(To));
+			if (obuf.ptr) {
+				o_out->append(obuf.buf.data(),
+						obuf.sz-obuf.left/sizeof(To)+obuf.buf.data());
+			}
+			obuf.sz = std::ssize(obuf.buf);
+			if (max_out_cnt != -1) {
+				max_out_cnt += obuf.left / sizeof(To);
+				if (max_out_cnt < obuf.sz)
+					obuf.sz = max_out_cnt;
+				max_out_cnt -= obuf.sz;
+			}
+			bool ret = obuf.sz
+				&&  obuf.ptr != reinterpret_cast<char *>(obuf.buf.data());
 			obuf.ptr = reinterpret_cast<char *>(obuf.buf.data());
-			obuf.left = obuf.buf.size() * sizeof(To);
+			obuf.left = obuf.sz * sizeof(To);
+			return ret;
 		};
-		flush_buf();
+		obuf_flush();
 
-		auto write_shift_sequence = [&]() {
-			std::size_t ileft = 0;
-			if (iconv(cdesc.cd, nullptr, &ileft, &obuf.ptr, &obuf.left)
-					== std::size_t(-1))
-				return false;
-			return true;
-		};
-
-		auto set_initial_state = [&]() {
-			std::size_t ileft = 0, oleft = 0;
-			iconv(cdesc.cd, nullptr, &ileft, nullptr, &oleft);
-		};
-		set_initial_state();
+		// Unicode dose not have shift state, comment it out
+		//auto write_shift_sequence = [&]() {
+		//	std::size_t ileft = 0;
+		//	if (iconv(cdesc.cd, nullptr, &ileft, &obuf.ptr, &obuf.left)
+		//			== std::size_t(-1))
+		//		return false;
+		//	return true;
+		//};
+		//auto set_initial_state = [&]() {
+		//	std::size_t ileft = 0, oleft = 0;
+		//	iconv(cdesc.cd, nullptr, &ileft, nullptr, &oleft);
+		//};
+		//set_initial_state();
 
 		while (true) {
 			if (iconv(cdesc.cd, &ibuf.ptr, &ibuf.left, &obuf.ptr, &obuf.left)
 					== std::size_t(-1)) {
 				switch (errno) {
 				case EILSEQ:
-					return false;
+					return -1;
 				case EINVAL:
-					if (! fill_buf())
-						return false;
+					if (! ibuf_fill())
+						return -1;
 					break;
 				case E2BIG:
-					flush_buf();
+					if (! obuf_flush())
+						goto while_end;
 				}
 			}
 			else
-				if (! fill_buf())
+				if (! ibuf_fill())
 					break;
 		}
+while_end:
 
-		if (! write_shift_sequence()
-				&&  ! (flush_buf(), write_shift_sequence()))
-			return false;
-		flush_buf();
+		// Unicode dose not have shift state, comment it out
+		//if (! write_shift_sequence()) {
+		//	obuf_flush();
+		//	write_shift_sequence();
+		//}
 
-		return true;
+		obuf_flush();
+		ibuf_unget();
+		return ibuf.pos;
 	}
+
 
 } //details
  
-
-// If the function returns false, then contents of *o_out is unspecified.
+/** 
+ * Converts a string in one UTF encoding pointed to by "in" to a string
+ * in another UTF encoding pointed to by "o_out".
+ *
+ * @param o_out pointer to the output string. clear() is not called.
+ * @param max_out_cnt the maximum number of characters that can be added
+ * to the output string, or -1 for no limit.
+ *
+ * #return returns the number of converted input string characters,
+ * or -1 if an error occurs, in which case the contents of the output
+ * string is unspecified.
+ */
 template <Cvt_endian::cvt_endian_t endian=
 		Cvt_endian::from_native|Cvt_endian::to_native,
 	typename Range, details::CharType To>
 requires (! details::CharType<Range>)
-bool g_cvt(const Range &in, std::basic_string<To> *o_out)
+ssize_t g_cvt(const Range &in, std::basic_string<To> *o_out,
+		ssize_t max_out_cnt=-1)
 {
 	using from_t = std::ranges::range_value_t<Range>;
 	std::basic_string_view<from_t> sv{in};
 	return details::g_cvt_base<
 			details::adjust_endian_mode<endian, from_t, To>(), from_t, To>(
-			sv.data(), sv.size(), o_out);
+			sv.data(), sv.size(), o_out, max_out_cnt);
 }
 
-
-// If the function returns false, then contents of *o_out is unspecified.
+/**
+ *  Converts the single "in" character to a string pointed to by "o_out".
+ */
 template <Cvt_endian::cvt_endian_t endian=
 		Cvt_endian::from_native|Cvt_endian::to_native,
 	details::CharType CharT, details::CharType To>
-bool g_cvt(CharT in, std::basic_string<To> *o_out)
+ssize_t g_cvt(CharT in, std::basic_string<To> *o_out)
 {
 	static thread_local std::basic_string<CharT> ch;
 	ch = in;
-	return g_cvt<endian>(ch, o_out);
+	return g_cvt<endian>(ch, o_out, -1);
 }
 
 
